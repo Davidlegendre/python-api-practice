@@ -1,44 +1,50 @@
 from models.SystemReturnModel import SystemReturn
 from models.User import User_Model
-from utils.utils import get_item
-
+from models.dtos.User_DTO import User_DTO
+from utils.utils import get_item_byDNI, get_item_byId
+from fastapi import HTTPException,status, encoders
+from messages import messages
 
 user_bd: list[User_Model] = list()
 
+def setCount() -> int:
+    if len(user_bd) == 0: return 1
+    return user_bd[len(user_bd) - 1].id + 1
+
 async def get_users() -> SystemReturn:
     if (len(user_bd) == 0):
-        return SystemReturn(mensaje="no hay usuarios")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.NoHayUsuarios)
     else:
-        return SystemReturn(mensaje="usuarios", data=user_bd)
+        return SystemReturn(mensaje=messages.Usuarios, data=user_bd)
 
 async def get_one_user(item_id: int) -> SystemReturn:
-    if len(user_bd) == 0: return  SystemReturn(mensaje="no hay datos") 
-    usuario = get_item(item_id, user_bd=user_bd)
-    if usuario: return SystemReturn(mensaje="usuario", data=usuario)    
-    return SystemReturn(mensaje="ese id no existe")
+    if len(user_bd) == 0: raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.NoHayUsuarios)
+    usuario = get_item_byId(item_id, user_bd=user_bd)
+    if usuario: return SystemReturn(mensaje=messages.Usuario, data=usuario)    
+    raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.EseIdNoExiste)
 
+#Recibe un DTO y lo guarda en Modelo
+async def create_user(item: User_DTO) -> SystemReturn:
+    user = get_item_byDNI(item.dni, user_bd)
+    if user: raise HTTPException(status.HTTP_409_CONFLICT, detail=messages.UsuarioYaExiste)   
+    user_bd.append(User_Model(id=setCount(), dni=item.dni, nombre=item.nombre, edad=item.edad))
+    return SystemReturn(mensaje=f"{messages.Usuario} {messages.Agregado}", data=item)
 
-async def create_user(item: User_Model) -> SystemReturn:
-    result = False
-    user = get_item(item.id, user_bd)
-    if user: return SystemReturn(mensaje=f"ese usuario ya existe con ese id: {item.id}")
-    user_bd.append(item)
-    return SystemReturn(mensaje="usuario agregado", data=item)
-
-async def update_user(id_item: int, item: User_Model) -> SystemReturn:
-    if len(user_bd) == 0: return  SystemReturn(mensaje="no hay datos") 
-    user = get_item(id_item, user_bd)  
+#Modifica desde un DTO a Model
+async def update_user(id_item: int, item: User_DTO) -> SystemReturn:
+    if len(user_bd) == 0: raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.NoHayDatos)
+    user = get_item_byId(id_item, user_bd)
     if user:
         user.nombre = item.nombre
         user.edad = item.edad
-        user.money = item.money
-        return SystemReturn(mensaje="usuario modificado", data=user) 
-    return SystemReturn(mensaje="ese id no existe")  
+        user.dni = item.dni
+        return SystemReturn(mensaje=f"{messages.Usuario} {messages.Modificado}", data=user) 
+    raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.EseIdNoExiste)
 
 async def delete_user(id_item: int) -> SystemReturn:
-    if len(user_bd) == 0: return SystemReturn(mensaje="no hay datos")
-    user = get_item(id_item, user_bd)
+    if len(user_bd) == 0: raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.NoHayDatos)
+    user = get_item_byId(id_item, user_bd)
     if user:
         user_bd.remove(user)
-        return SystemReturn(mensaje=f"Usuario {user.nombre} Eliminado", data=user)
-    return SystemReturn(mensaje="ese id no existe") 
+        return SystemReturn(mensaje=f"{messages.Usuario} {user.nombre} {messages.Eliminado}", data=user)
+    raise HTTPException(status.HTTP_404_NOT_FOUND, detail=messages.EseIdNoExiste)

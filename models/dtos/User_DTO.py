@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-class User_Model(BaseModel):
-    id: int
+
+class User_DTO(BaseModel):
     dni: int
     nombre: str
     edad: int
