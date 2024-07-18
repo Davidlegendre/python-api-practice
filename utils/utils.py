@@ -1,12 +1,14 @@
 from models.User import User_Model
-def get_item_byDNI(dni: int, user_bd: list[User_Model]) -> User_Model | None:
-    for user in user_bd:
-        if(user.dni == dni):
-            return user
-    return None
 
-def get_item_byId(id: int, user_bd: list[User_Model]) -> User_Model | None:
-    for user in user_bd:
-        if(user.id == id):
-            return user
-    return None
+import os
+from dotenv import load_dotenv
+
+# Cargar variables del archivo .env
+load_dotenv()
+
+# Obtener variables de entorno
+MONGO_USER = os.getenv('MONGO_USER')
+MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
+MONGO_HOST=os.getenv('MONGO_HOST')
+MONGO_DB_URI = os.getenv('MONGO_DB_URI')
+MONGO_DB = os.getenv('MONGO_DB')
