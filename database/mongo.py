@@ -1,4 +1,3 @@
-
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from utils.utils import MONGO_USER, MONGO_PASSWORD, MONGO_HOST, MONGO_DB_URI,MONGO_DB

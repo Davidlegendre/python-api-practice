@@ -1,5 +1,3 @@
-from models.User import User_Model
-
 import os
 from dotenv import load_dotenv
 
